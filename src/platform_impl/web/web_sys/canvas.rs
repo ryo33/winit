@@ -65,6 +65,8 @@ impl Canvas {
             .set_attribute("tabindex", "0")
             .map_err(|_| os_error!(OsError("Failed to set a tabindex".to_owned())))?;
 
+        canvas.style().set_property("touch-action", "none");
+
         let mouse_state = if has_pointer_event() {
             MouseState::HasPointerEvent(pointer_handler::PointerHandler::new())
         } else {
