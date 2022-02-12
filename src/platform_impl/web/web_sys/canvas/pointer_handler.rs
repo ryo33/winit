@@ -3,6 +3,7 @@ use super::EventListenerHandle;
 use crate::dpi::PhysicalPosition;
 use crate::event::{ModifiersState, MouseButton};
 
+use web_sys::HtmlCanvasElement;
 use web_sys::PointerEvent;
 
 pub(super) struct PointerHandler {
@@ -113,6 +114,7 @@ impl PointerHandler {
     where
         F: 'static + FnMut(i32, PhysicalPosition<f64>),
     {
+        let canvas = canvas_common.raw.clone();
         self.on_touch_move = Some(canvas_common.add_event(
             "pointermove",
             move |event: PointerEvent| {
@@ -120,13 +122,7 @@ impl PointerHandler {
                     return;
                 }
 
-                handler(
-                    event.pointer_id(),
-                    PhysicalPosition {
-                        x: event.offset_x() as f64,
-                        y: event.offset_y() as f64,
-                    },
-                );
+                handler(event.pointer_id(), physical_position(&event, &canvas));
             },
         ));
     }
@@ -135,6 +131,7 @@ impl PointerHandler {
     where
         F: 'static + FnMut(i32, PhysicalPosition<f64>),
     {
+        let canvas = canvas_common.raw.clone();
         self.on_touch_down = Some(canvas_common.add_event(
             "pointerdown",
             move |event: PointerEvent| {
@@ -142,13 +139,7 @@ impl PointerHandler {
                     return;
                 }
 
-                handler(
-                    event.pointer_id(),
-                    PhysicalPosition {
-                        x: event.offset_x() as f64,
-                        y: event.offset_y() as f64,
-                    },
-                );
+                handler(event.pointer_id(), physical_position(&event, &canvas));
             },
         ));
     }
@@ -157,6 +148,7 @@ impl PointerHandler {
     where
         F: 'static + FnMut(i32, PhysicalPosition<f64>),
     {
+        let canvas = canvas_common.raw.clone();
         self.on_touch_up = Some(canvas_common.add_event(
             "pointerup",
             move |event: PointerEvent| {
@@ -164,13 +156,7 @@ impl PointerHandler {
                     return;
                 }
 
-                handler(
-                    event.pointer_id(),
-                    PhysicalPosition {
-                        x: event.offset_x() as f64,
-                        y: event.offset_y() as f64,
-                    },
-                );
+                handler(event.pointer_id(), physical_position(&event, &canvas));
             },
         ));
     }
@@ -179,6 +165,7 @@ impl PointerHandler {
     where
         F: 'static + FnMut(i32, PhysicalPosition<f64>),
     {
+        let canvas = canvas_common.raw.clone();
         self.on_touch_cancel = Some(canvas_common.add_event(
             "pointercancel",
             move |event: PointerEvent| {
@@ -186,13 +173,7 @@ impl PointerHandler {
                     return;
                 }
 
-                handler(
-                    event.pointer_id(),
-                    PhysicalPosition {
-                        x: event.offset_x() as f64,
-                        y: event.offset_y() as f64,
-                    },
-                );
+                handler(event.pointer_id(), physical_position(&event, &canvas));
             },
         ));
     }
@@ -207,5 +188,16 @@ impl PointerHandler {
         self.on_touch_down = None;
         self.on_touch_up = None;
         self.on_touch_cancel = None;
+    }
+}
+
+fn physical_position(event: &PointerEvent, canvas: &HtmlCanvasElement) -> PhysicalPosition<f64> {
+    // not window scale factor here because we can modify the scale factor.
+    let dpi_width = canvas.width() as f64 / canvas.offset_width() as f64;
+    let dpi_height = canvas.height() as f64 / canvas.offset_height() as f64;
+    PhysicalPosition {
+        x: event.client_x() as f64 * dpi_width,
+        // Flip the Y axis because canvas's origin is top-left.
+        y: canvas.height() as f64 - event.client_y() as f64 * dpi_height,
     }
 }
