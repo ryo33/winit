@@ -193,8 +193,9 @@ impl PointerHandler {
 
 fn physical_position(event: &PointerEvent, canvas: &HtmlCanvasElement) -> PhysicalPosition<f64> {
     // not window scale factor here because we can modify the scale factor.
-    let dpi_width = canvas.width() as f64 / canvas.offset_width() as f64;
-    let dpi_height = canvas.height() as f64 / canvas.offset_height() as f64;
+    let scale_factor = super::super::scale_factor();
+    let dpi_width = canvas.width() as f64 / canvas.offset_width() as f64 * scale_factor;
+    let dpi_height = canvas.height() as f64 / canvas.offset_height() as f64 * scale_factor;
     PhysicalPosition {
         x: event.client_x() as f64 * dpi_width,
         // Flip the Y axis because canvas's origin is top-left.
